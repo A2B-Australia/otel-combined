@@ -6,3 +6,6 @@ scratch*.*
 .terraform
 .terraform.**
 *.tfstate
+.env
+.env*
+.env.*

@@ -33,17 +33,7 @@ fi
 #########################################
 # get SAS token for the Azure Storage Blob
 
-# TF_BACKEND_SAS=$(az storage blob generate-sas \
-#   --account-name $storage_account_name \
-#   --container-name $container_name \
-#   --account-key "F5VHkTYFGKk5gsSC5p4opfkB18f7YQx7B511cqJMOser+QVBoBllE6ZeqagHX9LNm201SwhRQGLn+ASt7EkTCQ==" \
-#   --connection-string "DefaultEndpointsProtocol=https;AccountName=alltfstatefilesdev;AccountKey=F5VHkTYFGKk5gsSC5p4opfkB18f7YQx7B511cqJMOser+QVBoBllE6ZeqagHX9LNm201SwhRQGLn+ASt7EkTCQ==;EndpointSuffix=core.windows.net"\
-#   --blob-url "https://$storage_account_name.blob.core.windows.net/$container_name/$1.tfstate" \
-#   --permissions "acrdrw" \
-#   --expiry $expiry_date \
-#   --https-only \
-#   --output tsv \
-#   --auth-mode key)
+
 
 # az storage blob user-delegation-key create \
 #     --account-name $storage_account_name \
