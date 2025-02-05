@@ -2,6 +2,10 @@
 
 This is a monorepo - a repo combining multiple sub-repositories as git modules.
 
+> NOTE: the details of this README.md are a little out of date... but the overall pattern and concepts remain the same
+
+
+
 ### Child Repositories
 
 |#|Repo Name|Pupose|Repo URL|
