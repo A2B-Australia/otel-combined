@@ -84,7 +84,6 @@ jobs:
             --registry            ${{ env.CONTAINER_REGISTRY }} \
             --resource-group      ${{ env.CONTAINER_REGISTRY_RESOURCE_GROUP }} \
             --image               ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            --file                otel_src/${{ env.OTEL_TYPE }}/Dockerfile \
             otel_src/${{ env.OTEL_TYPE }}/
 
       - name: (5) Tag container 'latest'
