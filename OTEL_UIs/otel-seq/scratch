@@ -1,0 +1,29 @@
+
+
+
+receivers:
+  # Your existing receivers config...
+
+processors:
+  # Your existing processors config...
+
+exporters:
+  otlphttp:
+    endpoint: "http://seq:5341/ingest/otlp"
+    headers:
+      "X-Seq-ApiKey": "Vm8UHc21xTcRdF0mT2j1" 
+
+service:
+  pipelines:
+    traces:
+      receivers: [your_receivers]
+      processors: [your_processors]
+      exporters: [otlphttp]
+    metrics:
+      receivers: [your_receivers]
+      processors: [your_processors]
+      exporters: [otlphttp]
+    logs:
+      receivers: [your_receivers]
+      processors: [your_processors]
+      exporters: [otlphttp]

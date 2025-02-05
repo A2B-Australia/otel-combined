@@ -1,0 +1,14 @@
+configuration:
+  ingress:
+    external: true
+    targetPort: 80
+    transport: auto       
+  registries:
+    - server: ${REGISTRY_SERVER}
+      username: ${REGISTRY_USERNAME}
+      password: ${REGISTRY_PASSWORD}
+template:
+  containers:
+    - image: ${FULL_IMAGE_NAME}
+      name: jaeger
+      

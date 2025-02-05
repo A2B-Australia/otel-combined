@@ -1,0 +1,93 @@
+id: /subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/providers/Microsoft.App/containerapps/jaeger
+identity:
+  type: None
+location: Australia East
+name: jaeger
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress:
+      additionalPortMappings: null
+      allowInsecure: false
+      clientCertificateMode: null
+      corsPolicy: null
+      customDomains: null
+      exposedPort: 0
+      external: true
+      fqdn: jaeger.ambitiouscoast-7317d970.australiaeast.azurecontainerapps.io
+      ipSecurityRestrictions: null
+      stickySessions: null
+      targetPort: 16686
+      targetPortHttpScheme: null
+      traffic:
+      - latestRevision: true
+        weight: 100
+      transport: Auto
+    maxInactiveRevisions: null
+    registries:
+    - identity: ''
+      passwordSecretRef: a2bphoenixdevacrazurecrio-a2bphoenixdevacr
+      server: a2bphoenixdevacr.azurecr.io
+      username: A2bPhoenixDevAcr
+    runtime: null
+    secrets:
+    - name: a2bphoenixdevacrazurecrio-a2bphoenixdevacr
+    service: null
+    targetLabel: ''
+  customDomainVerificationId: 250FCF891C73EC9B41013D281E4B2F99610EDB9E0B6636159C976BC7F9ACAD28
+  delegatedIdentities: []
+  environmentId: /subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/providers/Microsoft.App/managedEnvironments/phoenix-obs-otel-ace
+  eventStreamEndpoint: https://australiaeast.azurecontainerapps.dev/subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/containerApps/jaeger/eventstream
+  latestReadyRevisionName: jaeger--2eufelz
+  latestRevisionFqdn: jaeger--2eufelz.ambitiouscoast-7317d970.australiaeast.azurecontainerapps.io
+  latestRevisionName: jaeger--2eufelz
+  managedEnvironmentId: /subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/providers/Microsoft.App/managedEnvironments/phoenix-obs-otel-ace
+  outboundIpAddresses:
+  - 4.237.193.196
+  patchingMode: Automatic
+  provisioningState: Succeeded
+  runningStatus: Running
+  template:
+    containers:
+    - env:
+      - name: PORT
+        value: '16686'
+      - name: COLLECTOR_OTLP_ENABLED
+        value: 'true'
+      - name: COLLECTOR_OTLP_PORT
+        value: '4317'
+      image: a2bphoenixdevacr.azurecr.io/jaeger:1c9807aea89f7c24bcae9ff763f81d4312918ee3
+      imageType: ContainerImage
+      name: jaeger
+      resources:
+        cpu: 0.5
+        ephemeralStorage: 2Gi
+        memory: 1Gi
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 10
+      minReplicas: null
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes: null
+  workloadProfileName: null
+resourceGroup: Phoenix_Obs_OTEL_terraform
+systemData:
+  createdAt: '2024-11-26T22:11:32.9562783'
+  createdBy: f6d379db-30ce-4beb-8139-7e6eefbe5c34
+  createdByType: Application
+  lastModifiedAt: '2024-11-27T04:33:16.7398921'
+  lastModifiedBy: d423cc6c-4604-444d-b810-26825840e283
+  lastModifiedByType: Application
+tags:
+  Product_Group: Phoenix
+  Product_Name: Platform
+  createdby: Ian Scrivener - A2B Sydney
+  createdon: '2024-11-27T04:33:15.2350668Z'
+type: Microsoft.App/containerApps

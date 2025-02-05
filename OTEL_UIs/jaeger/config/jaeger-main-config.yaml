@@ -1,0 +1,21 @@
+apiVersion: jaegertracing.io/v1
+kind: Jaeger
+metadata:
+  name: simple-jaeger
+spec:
+  strategy: allInOne  # Single process installation
+  storage:
+    type: memory     # In-memory storage for simplicity
+  ingress:
+    enabled: false   # Disabled for local setup
+  allInOne:
+    options:
+      memory.max-traces: 100000
+    resources:
+      limits:
+        memory: 512Mi
+  sampling:
+    options:
+      default_strategy:
+        type: probabilistic
+        param: 1.0    # Sample all traces for simplicity

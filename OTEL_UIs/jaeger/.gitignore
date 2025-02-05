@@ -1,0 +1,7 @@
+.DS_Store
+.vscode
+.env
+.env*
+create_sp.sh
+crud_gh_secrets_and_variables.sh
+scratch*.txt

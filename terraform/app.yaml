@@ -1,0 +1,69 @@
+id: /subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/providers/Microsoft.App/containerapps/jaeger
+identity:
+  type: None
+location: Australia East
+name: jaeger
+properties:
+  configuration:
+    activeRevisionsMode: Single
+    dapr: null
+    identitySettings: []
+    ingress: null
+    maxInactiveRevisions: 0
+    registries: null
+    runtime: null
+    secrets: null
+    service: null
+    targetLabel: ''
+  customDomainVerificationId: 250FCF891C73EC9B41013D281E4B2F99610EDB9E0B6636159C976BC7F9ACAD28
+  delegatedIdentities: []
+  environmentId: /subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/providers/Microsoft.App/managedEnvironments/phoenix-obs-otel-ace
+  eventStreamEndpoint: https://australiaeast.azurecontainerapps.dev/subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/containerApps/jaeger/eventstream
+  latestReadyRevisionName: jaeger--h3o906u
+  latestRevisionFqdn: ''
+  latestRevisionName: jaeger--t2riqre
+  managedEnvironmentId: /subscriptions/5eb414e5-8dd1-4192-9209-98c04543c66c/resourceGroups/Phoenix_Obs_OTEL_terraform/providers/Microsoft.App/managedEnvironments/phoenix-obs-otel-ace
+  outboundIpAddresses:
+  - 4.200.103.159
+  patchingMode: Automatic
+  provisioningState: Succeeded
+  runningStatus: Running
+  template:
+    containers:
+    - image: mcr.microsoft.com/k8se/quickstart:latest
+      imageType: ContainerImage
+      name: examplecontainerapp
+      probes: []
+      resources:
+        cpu: 0.25
+        ephemeralStorage: 1Gi
+        memory: 0.5Gi
+    initContainers: null
+    revisionSuffix: ''
+    scale:
+      cooldownPeriod: 300
+      maxReplicas: 10
+      minReplicas: null
+      pollingInterval: 30
+      rules: null
+    serviceBinds: null
+    terminationGracePeriodSeconds: null
+    volumes:
+    - name: blob
+      storageName: mycontainerappstorage
+      storageType: AzureFile
+  workloadProfileName: null
+resourceGroup: Phoenix_Obs_OTEL_terraform
+systemData:
+  createdAt: '2024-11-22T23:23:04.9157799'
+  createdBy: f6d379db-30ce-4beb-8139-7e6eefbe5c34
+  createdByType: Application
+  lastModifiedAt: '2024-11-23T08:29:01.352298'
+  lastModifiedBy: Ian.Scrivener@a2baustralia.com
+  lastModifiedByType: User
+tags:
+  Product_Group: Phoenix
+  Product_Name: Platform
+  createdby: Ian Scrivener - A2B Sydney
+  createdon: '2024-11-23T07:29:39.2602911Z'
+type: Microsoft.App/containerApps

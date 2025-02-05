@@ -1,0 +1,6 @@
+[submodule "OTEL_UIs/jaegar"]
+	path = OTEL_UIs/jaeger
+	url = https://github.com/A2B-Australia/obs-otel-jaegar
+[submodule "A2B-Australia/terraform"]
+	path = A2B-Australia/terraform
+	url = https://github.com/A2B-Australia/obs-otel-terraform

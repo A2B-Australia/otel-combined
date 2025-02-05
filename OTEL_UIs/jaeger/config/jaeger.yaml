@@ -1,0 +1,49 @@
+memory:
+  max-traces: 50000
+
+collector:
+  otlp:
+    enabled: true
+  zipkin:
+    host-port: ":9411"
+  grpc:
+    host-port: ":14250"
+  http:
+    host-port: ":14268"
+
+query:
+  base-path: /
+  port: 16686
+  ui:
+    dependencies:
+      menuEnabled: true
+    menu:
+      - label: "About Jaeger"
+        url: "https://www.jaegertracing.io/"
+    search:
+      maxLookback:
+        duration: 24h
+      fields:
+        - name: service
+          label: Service
+          default: true
+        - name: operation
+          label: Operation
+          default: true
+        - name: tags
+          label: Tags
+          default: false
+
+sampling:
+  strategies:
+    - service: "default"
+      type: probabilistic
+      param: 1.0   # Sample 100% of traces
+
+admin:
+  http:
+    host-port: ":16687"
+
+logging:
+  level: info
+  format: json

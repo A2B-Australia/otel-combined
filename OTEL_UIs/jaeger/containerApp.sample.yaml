@@ -1,0 +1,56 @@
+identity:
+  userAssignedIdentities:
+    "/subscriptions/<subscription_id>/resourcegroups/my-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/my-user": {}
+  type: UserAssigned
+properties:
+  environmentId: "/subscriptions/<subscription_id>/resourceGroups/rg/providers/Microsoft.App/managedEnvironments/demokube"
+  configuration:
+    replicaTimeout: 10
+    replicaRetryLimit: 10
+    manualTriggerConfig:
+      replicaCompletionCount: 1
+      parallelism: 4
+    triggerType: Manual
+  template:
+    containers:
+    - image: repo/testcontainerAppsJob0:v1
+      name: testcontainerAppsJob0
+      probes:
+      - type: Liveness
+        httpGet:
+          path: "/health"
+          port: 8080
+          httpHeaders:
+          - name: Custom-Header
+            value: Awesome
+        initialDelaySeconds: 5
+        periodSeconds: 3
+      volumeMounts:
+      - mountPath: "/myempty"
+        volumeName: myempty
+      - mountPath: "/myfiles"
+        volumeName: azure-files-volume
+      - mountPath: "/mysecrets"
+        volumeName: mysecrets
+    initContainers:
+    - image: repo/testcontainerAppsJob0:v4
+      name: testinitcontainerAppsJob0
+      resources:
+        cpu: 0.2
+        memory: 100Mi
+      command:
+      - "/bin/sh"
+      args:
+      - "-c"
+      - while true; do echo hello; sleep 10;done
+    volumes:
+    - name: myempty
+      storageType: EmptyDir
+    - name: azure-files-volume
+      storageType: AzureFile
+      storageName: myazurefiles
+    - name: mysecrets
+      storageType: Secret
+      secrets:
+      - secretRef: mysecret
+        path: mysecret.txt

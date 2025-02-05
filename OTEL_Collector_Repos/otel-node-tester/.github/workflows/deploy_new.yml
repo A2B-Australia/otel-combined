@@ -1,0 +1,235 @@
+# NEW
+
+name: Build & deploy
+
+################################################################################
+# Variables and environment configuration
+env:
+
+  # OTEL COLLECTOR
+  OTEL_TYPE:                          ${{ vars.OTEL_TYPE }}   
+
+  # Azure 
+  AZURE_TENANT_ID:                    ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID:              ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CREDENTIALS:                  ${{ secrets.AZURE_CREDENTIALS }}
+
+  # Application variables
+  PORT:                               14250
+  CONTAINER_APP_ENV:                  ${{ vars.CONTAINER_APP_ENV }}
+  CONTAINER_APP_NAME:                 ${{ vars.CONTAINER_APP_NAME }}
+  DOCKERFILE_PATH:                    Dockerfile
+  IMAGE_NAME:                         ${{ vars.IMAGE_NAME }}
+  BUILD_ARGS:                         ""  
+  RESOURCE_GROUP:                     ${{ vars.AZURE_RESOURCE_GROUP }}
+
+  # Dynamic Git & Github variables
+  WORKSPACE:                          ${{ github.workspace }}
+  COMMIT_SHA:                         ${{ github.sha }}
+ 
+  # ACR 
+  IMAGE_NAME:                         ${{ vars.IMAGE_NAME }}
+  CONTAINER_REGISTRY:                 ${{ vars.CONTAINER_REGISTRY }}
+  CONTAINER_REGISTRY_RESOURCE_GROUP:  ${{ vars.CONTAINER_REGISTRY_RESOURCE_GROUP }}
+  CONTAINER_REGISTRY_LOGIN_SVR:       ${{ vars.CONTAINER_REGISTRY_LOGIN_SVR }}
+  FULL_IMAGE_NAME:                    ${{ vars.CONTAINER_REGISTRY_LOGIN_SVR }}/${{ vars.IMAGE_NAME }}:latest
+  REGISTRY_USERNAME:                  ${{ secrets.REGISTRY_USERNAME }}
+  REGISTRY_PASSWORD:                  ${{ secrets.REGISTRY_PASSWORD }}
+
+  # Azure File Share
+  STORAGE_ACCOUNT_NAME:               ${{ vars.STORAGE_ACCOUNT_NAME }}
+  STORAGE_SHARE_NAME:                 ${{ vars.STORAGE_SHARE_NAME }}
+  STORAGE_ACCOUNT_KEY:                ${{ secrets.STORAGE_ACCOUNT_KEY }}
+
+  # DNS & Domain Name
+  CUSTOM_DOMAIN_NAME_PREFIX:          ${{ vars.CUSTOM_DOMAIN_NAME_PREFIX }}
+  DNS_ZONE_NAME:                      ${{ vars.DNS_ZONE_NAME }}
+  DNS_RESOURCE_GROUP:                 ${{ vars.DNS_RESOURCE_GROUP }}  
+
+  # VNet & Subnet
+  VNET:                               ${{ vars.VNET}}
+  SUBNET:                             ${{ vars.SUBNET}}
+
+################################################################################
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+      
+    # Only trigger a build for specific files
+    paths:
+    - '.github/workflows/deploy.yml'
+    - 'otel_src/**/*'
+    - 'containerapp.yaml'
+    - 'Dockerfile'
+    
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: (1) Checkout to the branch
+        uses: actions/checkout@v4
+
+      - name: (2) Azure login via GH Action
+        uses: azure/login@v1
+        with:
+          creds:                  ${{ env.AZURE_CREDENTIALS }}
+
+      - name: (3) ACR login via az cli
+        run: |
+          az acr login \
+            --name                ${{ env.CONTAINER_REGISTRY }}  \
+            --resource-group      Phoenix_Containers \
+            --username            ${{ env.REGISTRY_USERNAME }} \
+            --password            ${{ env.REGISTRY_PASSWORD }}
+
+      - name: (4) Build container with Azure ACR
+        run: |
+          az acr build  \
+            --registry            ${{ env.CONTAINER_REGISTRY }} \
+            --resource-group      ${{ env.CONTAINER_REGISTRY_RESOURCE_GROUP }} \
+            --image               ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --file                otel_src/${{ env.OTEL_TYPE }}/Dockerfile \
+            otel_src/${{ env.OTEL_TYPE }}/
+
+      - name: (5) Tag container 'latest'
+        run: |
+          az acr import \
+            --name                ${{ env.CONTAINER_REGISTRY }} \
+            --resource-group      ${{ env.CONTAINER_REGISTRY_RESOURCE_GROUP }} \
+            --source              ${{ env.CONTAINER_REGISTRY_LOGIN_SVR }}/${{ env.IMAGE_NAME }}:${{ env.COMMIT_SHA }} \
+            --image               ${{ env.IMAGE_NAME }}:latest \
+            --force  
+      
+      - name: (6) Deploy new container to Azure Container Apps & update to public
+        run: |
+          az containerapp create \
+            --resource-group        ${{ env.RESOURCE_GROUP }} \
+            --environment           ${{ env.CONTAINER_APP_ENV }} \
+            --name                  ${{ env.CONTAINER_APP_NAME }} \
+            --image                 ${{ env.CONTAINER_REGISTRY_LOGIN_SVR }}/${{ env.IMAGE_NAME }}:latest \
+            --ingress               internal \
+            --target-port           ${{ env.PORT }} \
+            --transport             auto \
+            --min-replicas          1 \
+            --max-replicas          1 \
+            --registry-server       ${{env.CONTAINER_REGISTRY_LOGIN_SVR }} \
+            --registry-password     ${{env.REGISTRY_PASSWORD }} \
+            --registry-username     ${{env.REGISTRY_USERNAME }}  
+
+          # Update to public
+          az containerapp ingress update \
+            --name                  ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group        ${{ env.RESOURCE_GROUP }} \
+            --type                  external \
+            --allow-insecure        false 
+
+
+      - name: (7) Check deployment status
+        run: |
+          az containerapp show \
+            --name                  ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group        ${{ env.RESOURCE_GROUP }} \
+            --query                 "properties.latestRevisionName" \
+            --output                tsv
+  
+ 
+      ########################################             
+      - name: (8) create cname record in Azure DNS
+        run: |
+          FQDN=$(az containerapp show \
+            --name                  ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group        ${{ env.RESOURCE_GROUP }} \
+            --query                 "properties.configuration.ingress.fqdn" \
+            --output                tsv)
+
+          echo ${FQDN}
+        
+          az network dns record-set cname set-record \
+            --resource-group        ${{ env.DNS_RESOURCE_GROUP }} \
+            --zone-name             ${{ env.DNS_ZONE_NAME }} \
+            --record-set-name       ${{ env.CUSTOM_DOMAIN_NAME_PREFIX }} \
+            --ttl                   60 \
+            --cname                 ${FQDN}
+
+      ########################################             
+      - name: (9) create txt record in Azure DNS  
+        run: |             
+
+          # 8.2) get ACA custom verification id
+          verificationID=$(az containerapp show \
+            --name                  ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group        ${{ env.RESOURCE_GROUP }} \
+            --query                 "properties.customDomainVerificationId" \
+            --output                tsv)
+            
+          echo ${verificationID}
+
+          az network dns record-set txt add-record \
+            --record-set-name       "asuid.${{ env.CUSTOM_DOMAIN_NAME_PREFIX }}" \
+            --resource-group        ${{ env.DNS_RESOURCE_GROUP}} \
+            --zone-name             ${{ env.DNS_ZONE_NAME }} \
+            --value                 ${verificationID}
+
+          az network dns record-set txt update \
+            --name                  "asuid.${{ env.CUSTOM_DOMAIN_NAME_PREFIX }}" \
+            --resource-group        ${{ env.DNS_RESOURCE_GROUP}} \
+            --zone-name             ${{ env.DNS_ZONE_NAME }} \
+            --set                   ttl=60
+
+
+          sleep 15  
+
+      ########################################             
+      - name: (10) add custom subdomain  
+        run: |          
+          az containerapp hostname add \
+            --name                  ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group        ${{ env.RESOURCE_GROUP }} \
+            --hostname              ${{ env.CUSTOM_DOMAIN_NAME_PREFIX }}.${{ env.DNS_ZONE_NAME }}    
+
+          sleep 15  
+
+      ########################################             
+      - name: (11) create binding 
+        run: |          
+          az containerapp hostname bind \
+            --environment           ${{ env.CONTAINER_APP_ENV }} \
+            --name                  ${{ env.CONTAINER_APP_NAME }} \
+            --hostname              ${{ env.CUSTOM_DOMAIN_NAME_PREFIX }}.${{ env.DNS_ZONE_NAME }} \
+            --resource-group        ${{ env.RESOURCE_GROUP }} \
+            --validation-method     CNAME
+            
+          sleep 15            
+
+      ########################################             
+      - name: (12) managed certificate 
+        run: |            
+          az containerapp hostname bind \
+            --hostname               ${{ env.CUSTOM_DOMAIN_NAME_PREFIX }}.${{ env.DNS_ZONE_NAME }} \
+            --name                   ${{ env.CUSTOM_DOMAIN_NAME_PREFIX }} \
+            --resource-group         ${{ env.RESOURCE_GROUP }} \
+            --environment            ${{ env.CONTAINER_APP_ENV }} \
+            --validation-method      CNAME
+            
+            
+          echo "Application URL: https://${{ env.CUSTOM_DOMAIN_NAME_PREFIX }}.${{ env.DNS_ZONE_NAME }}"  
+
+
+      ########################################             
+      - name: (13) Check deployment status
+        run: |
+          az containerapp show \
+            --name                   ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group         ${{ env.RESOURCE_GROUP }} \
+            --query                  "properties.latestRevisionName" \
+            --output                 tsv

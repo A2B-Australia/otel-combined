@@ -1,0 +1,127 @@
+name: Build & deploy
+
+################################################################################
+# Variables and environment configuration
+env:
+
+  # OTEL COLLECTOR
+  OTEL_TYPE:                          ${{ vars.OTEL_TYPE }}   
+
+  # Azure 
+  AZURE_TENANT_ID:                    ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID:              ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CREDENTIALS:                  ${{ secrets.AZURE_CREDENTIALS }}
+
+  # Application variables
+  CONTAINER_APP_ENV:                  ${{ vars.CONTAINER_APP_ENV }}
+  CONTAINER_APP_NAME:                 ${{ vars.CONTAINER_APP_NAME }}
+  RESOURCE_GROUP:                     ${{ vars.AZURE_RESOURCE_GROUP }}
+
+  # Dynamic Git & Github variables
+  WORKSPACE:                          ${{ github.workspace }}
+  COMMIT_SHA:                         ${{ github.sha }}
+ 
+  # ACR 
+  IMAGE_NAME:                         ${{ vars.IMAGE_NAME }}
+  CONTAINER_REGISTRY:                 ${{ vars.CONTAINER_REGISTRY }}
+  CONTAINER_REGISTRY_RESOURCE_GROUP:  ${{ vars.CONTAINER_REGISTRY_RESOURCE_GROUP }}
+  CONTAINER_REGISTRY_LOGIN_SVR:       ${{ vars.CONTAINER_REGISTRY_LOGIN_SVR }}
+  FULL_IMAGE_NAME:                    ${{ vars.CONTAINER_REGISTRY_LOGIN_SVR }}/${{ vars.IMAGE_NAME }}:latest
+  REGISTRY_USERNAME:                  ${{ secrets.REGISTRY_USERNAME }}
+  REGISTRY_PASSWORD:                  ${{ secrets.REGISTRY_PASSWORD }}
+
+  # # Azure File Share
+  # STORAGE_ACCOUNT_NAME:               ${{ vars.STORAGE_ACCOUNT_NAME }}
+  # STORAGE_SHARE_NAME:                 ${{ vars.STORAGE_SHARE_NAME }}
+  # STORAGE_ACCOUNT_KEY:                ${{ secrets.STORAGE_ACCOUNT_KEY }}
+
+################################################################################
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+      
+    # Only trigger a build for specific files
+    paths:
+    - '.github/workflows/deploy.yml'
+    - 'otel_src/**/*'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: (1) Checkout to the branch
+        uses: actions/checkout@v4
+
+      - name: (2) Azure login via GH Action
+        uses: azure/login@v1
+        with:
+          creds:                  ${{ env.AZURE_CREDENTIALS }}
+
+      - name: (3) ACR login via az cli
+        run: |
+          az acr login \
+            --name                ${{ env.CONTAINER_REGISTRY }}  \
+            --resource-group      Phoenix_Containers \
+            --username            ${{ env.REGISTRY_USERNAME }} \
+            --password            ${{ env.REGISTRY_PASSWORD }}
+
+      - name: (4) Build container with Azure ACR
+        run: |
+          az acr build  \
+            --registry            ${{ env.CONTAINER_REGISTRY }} \
+            --resource-group      ${{ env.CONTAINER_REGISTRY_RESOURCE_GROUP }} \
+            --image               ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+            --file                otel_src/${{ env.OTEL_TYPE }}/Dockerfile \
+            otel_src/${{ env.OTEL_TYPE }}/
+
+      - name: (5) Tag container 'latest'
+        run: |
+          az acr import \
+            --name                ${{ env.CONTAINER_REGISTRY }} \
+            --resource-group      ${{ env.CONTAINER_REGISTRY_RESOURCE_GROUP }} \
+            --source              ${{ env.CONTAINER_REGISTRY_LOGIN_SVR }}/${{ env.IMAGE_NAME }}:${{ env.COMMIT_SHA }} \
+            --image               ${{ env.IMAGE_NAME }}:latest \
+            --force  
+      
+      - name: (6) Deploy new container to Azure Container Apps
+        run: |
+          az containerapp create \
+            --resource-group      ${{ env.RESOURCE_GROUP }} \
+            --environment         ${{ env.CONTAINER_APP_ENV }} \
+            --name                ${{ env.CONTAINER_APP_NAME }} \
+            --image               ${{ env.CONTAINER_REGISTRY_LOGIN_SVR }}/${{ env.IMAGE_NAME }}:latest \
+            --min-instances       1 \
+            --max-instances       1 \
+            --ingress             external \
+            --target-port         4317 \
+            --transport           auto \
+            --registry-server     ${{env.CONTAINER_REGISTRY_LOGIN_SVR }} \
+            --registry-password   ${{env.REGISTRY_PASSWORD }} \
+            --registry-username   ${{env.REGISTRY_USERNAME }}      
+
+      - name: (7) Check deployment status
+        run: |
+          az containerapp show \
+            --name                ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group      ${{ env.RESOURCE_GROUP }} \
+            --query               "properties.latestRevisionName" \
+            --output              tsv
+  
+      - name: (8) Get application URL
+        run: |
+          FQDN=$(az containerapp show \
+            --name                ${{ env.CONTAINER_APP_NAME }} \
+            --resource-group      ${{ env.RESOURCE_GROUP }} \
+            --query               "properties.configuration.ingress.fqdn" \
+            --output              tsv)
+          echo "Application URL: https://$FQDN"

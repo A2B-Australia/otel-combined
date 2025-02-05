@@ -1,0 +1,40 @@
+containers:
+  - image:        a2bphoenixdevacr.azurecr.io/jaeger:latest
+    name:         jaeger
+    volumeMounts:
+    - volumeName:   my-azure-file-volume
+      mountPath:    /mnt/config
+
+
+# properties:
+#   template:
+#     scale:
+#       minReplicas: 1
+#       maxReplicas: 1
+#     # containers:
+#       # command:
+#       # - "/bin/sh"
+#       # args:
+#       # - "-c"
+#       # - while true; do echo hello; sleep 10;done
+#       # command: "--config-file=/mnt/config/jaeger/config.yaml"
+#         # env:
+#         #   - name: FOO
+#         #     value: bar
+#         # resources:
+#         #   cpu: 0.5
+#         #   memory: 1Gi
+#     #     volumeMounts:
+#     #       - name: myvolume
+#     #         mountPath: /mnt/config
+#     # volumes:
+#     #   - name: myvolume
+#     #     storageType: AzureFile
+#     #     StorageName: mystorage
+#   # configuration:
+#     # ingress:
+#     #   additionalPorts:
+#     #     - port: 4317
+#     #       protocol: tcp
+#     #     - port: 4318
+#     #       protocol: http

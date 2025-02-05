@@ -1,0 +1,15 @@
+{
+  "Authentication": {
+    "Providers": {
+      "GitHub": {
+        "IsEnabled": true,
+        "ClientId": "your-github-client-id",
+        "ClientSecret": "your-github-client-secret",
+        "EnterpriseServerUrl": null,
+        "RequiredOrganization": "A2B-Australia",
+        "AllowedTeams": ["seq-users"],
+        "AdminTeams": ["seq-admins"]
+      }
+    }
+  }
+}

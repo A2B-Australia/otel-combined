@@ -1,0 +1,55 @@
+configuration:
+  ingress:
+    external: true
+    targetPort: 80
+    transport: auto
+  secrets:
+    - name: registry-password
+      value: ${REGISTRY_PASSWORD}
+    - name: storage-key
+      value: ${STORAGE_ACCOUNT_KEY}        
+  registries:
+    - server: ${REGISTRY_SERVER}
+      username: ${REGISTRY_USERNAME}
+      passwordSecretRef: registry-password
+template:
+  containers:
+    - image: ${FULL_IMAGE_NAME}
+      name: jaeger
+      # env:
+      #   - name: ENVIRONMENT
+      #     value: production
+      resources:
+        cpu: 0.5
+        memory: 1Gi
+      # probes:
+      #   - type: liveness
+      #     httpGet:
+      #       path: /health
+      #       port: 80
+      #     periodSeconds: 10
+      #   - type: readiness
+      #     httpGet:
+      #       path: /ready
+      #       port: 80
+      #     periodSeconds: 10
+  scale:
+    minReplicas: 1
+    maxReplicas: 11
+    # rules:
+    #   - name: http-scale
+    #     http:
+    #       metadata:
+    #         concurrentRequests: "100"
+    #       auth:
+    #         - triggerParameter: concurrent-requests
+    #           metadata:
+    #             targetValue: "100"
+
+  volumes:
+    - name: my-data
+      storageType: AzureFile
+      storageName: ${STORAGE_ACCOUNT_NAME}
+      shareName: file-share
+      accessMode: ReadWrite
+      accountKey: ${STORAGE_ACCOUNT_KEY}

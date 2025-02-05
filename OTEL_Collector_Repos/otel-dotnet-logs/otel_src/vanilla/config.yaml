@@ -1,0 +1,40 @@
+# Default OpenTelemetry Collector Configuration (config.yaml)
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  otlp:
+    endpoint: "https://otlp.nr-data.net:4317"  # New Relic's OLTP endpoint
+    headers:
+      api-key: "4d253c2af9c631ef3422d95a784e8bcdFFFFNRAL"  # Replace with your New Relic license key
+
+  otlphttp:
+    endpoint: "https://otlp.nr-data.net:4318"  # New Relic's HTTP endpoint
+    headers:
+      api-key: "4d253c2af9c631ef3422d95a784e8bcdFFFFNRAL"  # Replace with your New Relic license key
+    compression: gzip
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlphttp]

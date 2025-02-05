@@ -1,0 +1,7 @@
+git submodule add https://github.com/A2B-Australia/obs-otel-terraform OTEL_Collector_Repos/otel-infra
+git submodule add https://github.com/A2B-Australia/obs-otel-collector-infra OTEL_Collector_Repos/otel-infra
+git submodule add https://github.com/A2B-Australia/obs-otel-dotnet-logs OTEL_Collector_Repos/otel-dotnet-logs
+git submodule add https://github.com/A2B-Australia/obs-otel-dotnet-traces OTEL_Collector_Repos/otel-dotnet-traces
+git submodule add https://github.com/A2B-Australia/obs-otel-dotnet-metrics OTEL_Collector_Repos/otel-dotnet-metrics
+git submodule add https://github.com/A2B-Australia/obs-otel-collector-android OTEL_Collector_Repos/otel-android
+

@@ -1,0 +1,8 @@
+.vscore
+.DS_Store
+_WORKING_FILES
+scratch*.*
+**.idea
+.terraform
+.terraform.**
+*.tfstate
